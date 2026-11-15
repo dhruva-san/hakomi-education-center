@@ -230,6 +230,14 @@ a { color: inherit; }
 .talks strong { display: block; font: 500 var(--s1) / 1.2 var(--serif); }
 .talks span { color: var(--stone); font-size: var(--s-1); }
 
+/* talk pages */
+.player { margin-top: clamp(2rem, 5vw, 3.5rem); aspect-ratio: 16 / 9; border-radius: 1.25rem; overflow: hidden; background: var(--deep); box-shadow: 0 2.5rem 5rem -2.5rem rgba(14, 47, 53, 0.5); }
+.player iframe { display: block; width: 100%; height: 100%; border: 0; }
+.talk-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem 2rem; margin-top: 1.75rem; }
+.talks a[aria-current] i { background: var(--deep); }
+.talks a[aria-current] i::before { border-left-color: var(--ice); }
+.fine { font-size: var(--s-1); color: var(--stone); }
+
 /* faq */
 .faq-group + .faq-group { margin-top: clamp(3rem, 6vw, 5rem); }
 .faq-group h2 { font-size: var(--s2); margin-bottom: 1.25rem; color: var(--garnet); }

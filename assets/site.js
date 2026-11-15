@@ -8,7 +8,8 @@ document.documentElement.classList.add('js');
    ponytail: injected by JS so six static pages share one copy. Move to a real
    template (11ty, Astro, the CMS) when this stops being a prototype. */
 const page = location.pathname.split('/').pop() || 'index.html';
-const here = page === 'team.html' ? 'about.html' : page; // team lives under About in the nav
+// team lives under About in the nav, talks under The Method
+const here = { 'team.html': 'about.html', 'talk.html': 'method.html' }[page] || page;
 const NAV = [
   ['method.html', 'The Method'],
   ['about.html', 'About'],
@@ -249,6 +250,39 @@ if (cal) {
     render();
   }));
   render();
+}
+
+/* ---------- talks: one template page, talk.html?t=<slug> ----------
+   ponytail: five talks rendered client-side from this list. Make them static
+   pages (or CMS entries) if they ever need their own share previews or search listing.
+   Keep the titles in sync with the list in method.html. */
+const TALKS = [
+  { slug: 'brief-introduction', title: 'Brief Introduction to Hakomi', by: 'Ron Kurtz (1934–2011), Creator of the Hakomi Method', yt: 'ePb5Anhyeqo', channel: 'ronk1934',
+    about: ['Ron Kurtz is the creator of Hakomi and established the first iteration of this method in the late 1970s, described as somatic psychotherapy, which brought together a broad spectrum of influences: humanistic therapeutic traditions (such as Gestalt therapy), body work (such as Feldenkrais and Bioenergetics), Taoist and Buddhist philosophy, among others.', 'He was a pioneer in bringing the practice of mindfulness to the therapy room.'] },
+  { slug: 'five-principles', title: 'Five Principles of Hakomi', by: 'Donna Martin, Senior Trainer and Legacy Holder of the Hakomi Method', yt: '0nPB5G9I3kg', channel: 'Hakomi Education Network' },
+  { slug: 'six-foundational-skills', title: 'The Six Foundational Skills of Hakomi', by: 'Georgia Marvin, Senior Trainer and Legacy Holder of the Hakomi Method', yt: 'SvvVi-i0LNc', channel: 'Hakomi Education Network' },
+  { slug: 'skillful-hakomi', title: 'What is Skillful Hakomi?', by: 'Georgia Marvin, Senior Trainer and Legacy Holder of the Hakomi Method', yt: 'AfHLLruXRg0', channel: 'Hakomi Education Network' },
+  { slug: 'tedxaustin', title: 'TEDxAustin Talk', by: 'Flint Sparks, Zen Priest, Senior Trainer and Legacy Holder of the Hakomi Method', yt: 'X3m2oM_C9bQ', channel: 'TEDx Talks' },
+];
+const talkPage = $('[data-talk]');
+if (talkPage) {
+  // unknown or missing ?t falls back to the first talk
+  const i = Math.max(0, TALKS.findIndex((t) => t.slug === new URLSearchParams(location.search).get('t')));
+  const t = TALKS[i], prev = TALKS[i - 1], next = TALKS[i + 1];
+  const url = (x) => `talk.html?t=${x.slug}`;
+  document.title = `${t.title} | Hakomi Education Center`;
+  $('[data-talk-title]').textContent = t.title;
+  $('[data-talk-by]').textContent = t.by;
+  $('[data-talk-player]').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${t.yt}?rel=0" title="${t.title}" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  $('[data-talk-nav]').innerHTML =
+    (prev ? `<a class="link" href="${url(prev)}">Previous: ${prev.title}</a>` : '<span></span>') +
+    (next ? `<a class="link" href="${url(next)}">Next: ${next.title}</a>` : '');
+  $('[data-talk-about]').insertAdjacentHTML('beforeend',
+    (t.about || []).map((p) => `<p>${p}</p>`).join('') +
+    `<p>One of five talks we share to introduce the evolution of Hakomi, its principles and why it works.</p>
+     <p class="fine">Video published by ${t.channel}. <a class="link" href="https://www.youtube.com/watch?v=${t.yt}">Watch on YouTube</a></p>`);
+  $('[data-talk-list]').innerHTML = TALKS.map((x) => `
+    <li><a href="${url(x)}"${x === t ? ' aria-current="page"' : ''}><i></i><div><strong>${x.title}</strong><span>${x.by}</span></div></a></li>`).join('');
 }
 
 /* ---------- dialogs and demo forms ---------- */
