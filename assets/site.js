@@ -7,7 +7,8 @@ document.documentElement.classList.add('js');
 /* ---------- header and footer ----------
    ponytail: injected by JS so six static pages share one copy. Move to a real
    template (11ty, Astro, the CMS) when this stops being a prototype. */
-const here = location.pathname.split('/').pop() || 'index.html';
+const page = location.pathname.split('/').pop() || 'index.html';
+const here = page === 'team.html' ? 'about.html' : page; // team lives under About in the nav
 const NAV = [
   ['method.html', 'The Method'],
   ['about.html', 'About'],
@@ -92,6 +93,7 @@ if (hero && !calm) {
     stage.style.setProperty('--cx', lerp(cx0, w / 2, open).toFixed(1) + 'px');
     stage.style.setProperty('--cy', lerp(cy0, h / 2, open).toFixed(1) + 'px');
     stage.style.setProperty('--fade', 1 - smooth(0.02, 0.3, p));
+    copy.style.pointerEvents = p > 0.2 ? 'none' : ''; // faded-out buttons must not take clicks
     stage.style.setProperty('--lift', p * 80 + 'px');
     stage.style.setProperty('--shade', smooth(0.55, 0.85, p));
     stage.style.setProperty('--after', smooth(0.62, 0.9, p));

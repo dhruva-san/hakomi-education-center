@@ -120,7 +120,7 @@ a { color: inherit; }
 .hero-copy, .hero-after { position: absolute; z-index: 2; left: var(--gutter); }
 .hero-copy { top: 50%; width: min(46rem, 54vw); transform: translateY(calc(-46% - var(--lift, 0px))); opacity: var(--fade, 1); }
 .hero-copy .lede { margin-top: 1.5rem; color: var(--deep); max-width: 34ch; }
-.hero-after { bottom: clamp(3rem, 12vh, 8rem); width: min(56rem, calc(100% - 2 * var(--gutter))); color: #fff; opacity: var(--after, 0); font: 400 var(--s3) / 1.08 var(--serif); letter-spacing: -0.012em; text-wrap: balance; }
+.hero-after { pointer-events: none; /* invisible until scrolled; must never sit on top of the buttons */ bottom: clamp(3rem, 12vh, 8rem); width: min(56rem, calc(100% - 2 * var(--gutter))); color: #fff; opacity: var(--after, 0); font: 400 var(--s3) / 1.08 var(--serif); letter-spacing: -0.012em; text-wrap: balance; }
 .hero h1 span { display: block; }
 .js .hero h1 span, .js .hero-copy .lede, .js .hero-copy .actions { opacity: 0; transform: translateY(0.6em); animation: rise 1.4s var(--ease) forwards; animation-delay: calc(var(--i, 0) * 0.28s + 0.2s); }
 @keyframes rise { to { opacity: 1; transform: none; } }
@@ -201,6 +201,16 @@ a { color: inherit; }
 .section-head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 1.5rem clamp(2rem, 6vw, 6rem); align-items: end; margin-bottom: clamp(2rem, 4vw, 3.5rem); }
 .section-head p { color: var(--stone); max-width: 46ch; }
 @media (max-width: 52rem) { .section-head { grid-template-columns: 1fr; } .event { grid-template-columns: 5rem 1fr; } }
+
+/* team bios */
+.bio { display: grid; grid-template-columns: clamp(6rem, 15vw, 12rem) 1fr; gap: clamp(1.5rem, 4vw, 4rem); align-items: start; padding-block: clamp(2.5rem, 5vw, 4rem); border-top: 1px solid var(--line); }
+.bio > .round { position: sticky; top: 6.5rem; }
+.bio .role { color: var(--garnet); font-weight: 700; font-size: var(--s-1); margin-top: 0.4rem; }
+.bio .fine { font-size: var(--s-1); color: var(--stone); }
+@media (max-width: 52rem) {
+  .bio { grid-template-columns: 1fr; }
+  .bio > .round { position: static; width: 8rem; }
+}
 
 /* people, network, talks */
 .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 3rem 2.5rem; margin-top: 3rem; }
