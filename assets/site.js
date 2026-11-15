@@ -118,10 +118,20 @@ if (!calm) {
   });
 }
 
-/* ---------- water: a small WebGL surface that ripples under the pointer ---------- */
+/* ---------- water: a small WebGL surface that ripples out from the pointer ----------
+   Moving the pointer leaves a drop every so often. Each drop keeps rippling outward
+   until it has died away on its own; a new drop never restarts or replaces an older
+   one (that restart is what made the first version feel stuck). */
+const DROPS = 12;      // ripples alive at once
+const DROP_LIFE = 5;   // seconds until a ripple has fully died away
 const FRAG = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
-uniform vec2 u_res; uniform float u_t; uniform vec2 u_m; uniform float u_mt;
+#endif
+uniform vec2 u_res; uniform float u_t;
+uniform vec3 u_drops[${DROPS}]; // x, y in 0..1, z = age in seconds (negative = unused)
 uniform vec3 u_a; uniform vec3 u_b;
 void main() {
   vec2 p = gl_FragCoord.xy / u_res; float asp = u_res.x / u_res.y; p.x *= asp;
@@ -131,8 +141,13 @@ void main() {
     q += vec2(sin(q.y * 1.3 + t + f), cos(q.x * 1.1 - t * 1.2 + f * 1.7)) * 0.38;
     hgt += sin(q.x + q.y * 0.6 + t * 2.0) * 0.25;
   }
-  vec2 m = u_m; m.x *= asp; float d = distance(p, m); float age = u_t - u_mt;
-  hgt += sin(d * 34.0 - age * 5.0) * exp(-d * 5.0) * exp(-age * 0.9) * 0.7;
+  for (int i = 0; i < ${DROPS}; i++) {
+    vec3 D = u_drops[i];
+    if (D.z < 0.0) continue;
+    float d = distance(p, vec2(D.x * asp, D.y));
+    // same rings as the original ripple; each eases in so a new one never pops
+    hgt += sin(d * 34.0 - D.z * 5.0) * exp(-d * 5.0) * exp(-D.z * 0.9) * smoothstep(0.0, 0.35, D.z) * 0.62;
+  }
   float light = smoothstep(0.15, 0.9, hgt * 0.5 + 0.5);
   vec3 c = mix(u_b, u_a, light) + pow(light, 7.0) * 0.05;
   gl_FragColor = vec4(c, 1.0);
@@ -166,7 +181,9 @@ function water(el) {
   gl.uniform3fv(u('u_a'), a);
   gl.uniform3fv(u('u_b'), b);
 
-  let mouse = [0.5, 0.5], mouseAt = -10, on = false;
+  let on = false;
+  const drops = []; // {x, y, t}, oldest first
+  const dropData = new Float32Array(DROPS * 3);
   const size = () => {
     // soft image, so half resolution is plenty
     canvas.width = Math.max(2, el.clientWidth * 0.5);
@@ -177,8 +194,12 @@ function water(el) {
   const draw = (now) => {
     const t = now / 1000;
     gl.uniform1f(u('u_t'), t);
-    gl.uniform2fv(u('u_m'), mouse);
-    gl.uniform1f(u('u_mt'), mouseAt);
+    while (drops.length && t - drops[0].t > DROP_LIFE) drops.shift(); // died away
+    for (let i = 0; i < DROPS; i++) {
+      const d = drops[i];
+      dropData.set(d ? [d.x, d.y, t - d.t] : [0, 0, -1], i * 3);
+    }
+    gl.uniform3fv(u('u_drops'), dropData);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (on && !calm) requestAnimationFrame(draw);
   };
@@ -187,13 +208,17 @@ function water(el) {
     const was = on; on = e.isIntersecting;
     if (on && !was && !calm) requestAnimationFrame(draw);
   }).observe(el);
-  let last = 0;
+  if (calm) return; // still water for people who ask for less motion
   el.addEventListener('pointermove', (e) => {
-    if (e.timeStamp - last < 450) return; // one ripple at a time, not a wake
-    last = e.timeStamp;
-    const r = el.getBoundingClientRect();
-    mouse = [(e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height];
-    mouseAt = performance.now() / 1000;
+    const r = el.getBoundingClientRect(), t = performance.now() / 1000;
+    const pt = { x: (e.clientX - r.left) / r.width, y: 1 - (e.clientY - r.top) / r.height, t };
+    const last = drops[drops.length - 1];
+    // a new drop only after the pointer has travelled a little and a moment has passed,
+    // so a moving pointer leaves a spaced line of ripples instead of a pile on one spot
+    const travelled = last ? Math.hypot((pt.x - last.x) * r.width, (pt.y - last.y) * r.height) : Infinity;
+    if (travelled < 90 || (last && t - last.t < 0.4)) return;
+    drops.push(pt);
+    if (drops.length > DROPS) drops.shift(); // only ever the oldest, already faint
   });
 }
 $$('[data-water]').forEach(water);
